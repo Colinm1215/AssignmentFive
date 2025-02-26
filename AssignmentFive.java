@@ -1,3 +1,11 @@
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
+
+
 interface IStudentDal {
     Student getStudent(int id);
 }
@@ -32,9 +40,10 @@ class Aid {
     private final Student student;
     private final IStudentDal studentDal;
 
-    public Aid(int studentId, IStudentDal studentDal) {
+    @Inject
+    public Aid(IStudentDal studentDal, @Named("studentId") int studentId) {
         this.studentDal = studentDal;
-        this.student = this.studentDal.getStudent(studentId);
+        this.student = studentDal.getStudent(studentId);
     }
 
     public void printStudentInfo() {
@@ -42,10 +51,21 @@ class Aid {
     }
 }
 
+class AidInject extends AbstractModule {
+    @Override
+    protected void configure() {
+        super.configure();
+        bind(IStudentDal.class).to(StudentDal.class);
+        bind(Integer.class)
+                .annotatedWith(Names.named("studentId"))
+                .toInstance(10);
+    }
+}
+
 public class AssignmentFive {
     public static void main(String[] args) {
-        IStudentDal studentDal = new StudentDal();
-        Aid aid = new Aid(10, studentDal);
+        Injector injector = Guice.createInjector(new AidInject());
+        Aid aid = injector.getInstance(Aid.class);
         aid.printStudentInfo();
     }
 }
